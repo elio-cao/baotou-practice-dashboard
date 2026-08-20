@@ -1,0 +1,6 @@
+# 开发过程产物：patch 脚本、check 脚本、临时调试脚本
+patch_*.py
+check*.py
+_*.py
+download.py
+fetch_index.py

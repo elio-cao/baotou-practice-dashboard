@@ -1,0 +1,1788 @@
+﻿<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>包头市中小学综合实践教育中心</title>
+
+<style>
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { width: 100%; background: #010b22; overflow-x: hidden; overflow-y: auto; }
+
+  body { font-family: "PingFang SC", "Microsoft YaHei", "Source Han Sans SC", sans-serif; }
+
+
+
+  #screen {
+
+    position: absolute; left: 0; top: 0;
+
+    width: 1920px; height: 1080px;
+
+    transform-origin: top left;
+
+    background: transparent;
+
+    overflow: hidden;
+
+    color: #cfe3f5;
+
+  }
+  /* v17: dim the background image, let the dark body show through */
+  #screen::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: url("assets/full_bg.png") no-repeat center/cover;
+    opacity: 0.18;
+    z-index: 0;
+    pointer-events: none;
+  }
+  /* z-index:1 on all children puts them above the dimmed bg (already
+     position:absolute so z-index takes effect, no need to change position) */
+  #screen > * { z-index: 1; }
+  /* Central aerial image sits above the dimmed bg */
+  #screen > .aerial { z-index: 2; }
+  /* 6 dept cards sit above the central aerial image */
+  #screen > .dept-card { z-index: 3; }
+
+  /* v19 tech effects: scanline + panel glow + radar pulse */
+  @keyframes cs-panel-pulse {
+    0%, 100% { box-shadow: inset 0 0 24px rgba(20,80,170,.18); }
+    50%      { box-shadow: inset 0 0 30px rgba(55,184,248,.32), inset 0 0 2px rgba(93,202,249,.45); }
+  }
+  @keyframes cs-radar {
+    0%   { transform: translate(-50%,-50%) scale(.2); opacity: .9; }
+    100% { transform: translate(-50%,-50%) scale(1.2); opacity: 0;  }
+  }
+  /* v24 rising light particles: cyan dots drifting up from the bottom */
+  .rise-dot {
+    position: absolute;
+    bottom: -8px;
+    width: 2px; height: 2px;
+    border-radius: 50%;
+    background: #e6f3ff;
+    box-shadow: 0 0 6px 1px rgba(93,202,249,.55);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    animation: cs-rise 7s linear infinite;
+  }
+  .rise-dot.r2 { animation-duration: 8s; }
+  .rise-dot.r3 { animation-duration: 9s; }
+  .rise-dot.r4 { animation-duration: 10s; }
+  /* slow upward drift with fade in/out */
+  @keyframes cs-rise {
+    0%   { transform: translateY(0)      translateX(0);   opacity: 0; }
+    10%  { opacity: .9; }
+    90%  { opacity: .7; }
+    100% { transform: translateY(-1080px) translateX(-6px); opacity: 0; }
+  }
+  #screen::after { content: none; }    100% { opacity: 1;   transform: scale(1.15); }
+  }
+  /* Hide the old pseudo-element dot layer */
+  #screen::after { content: none; }  @keyframes cs-dots-pulse {
+    0%   { opacity: 0.7; filter: drop-shadow(0 0 6px rgba(93,202,249,.6)); }
+    100% { opacity: 1;   filter: drop-shadow(0 0 14px rgba(93,202,249,1)); }
+  }  @keyframes cs-dots-pulse {
+    0%   { opacity: 0.5; filter: drop-shadow(0 0 4px rgba(93,202,249,.4)); }
+    100% { opacity: 1;   filter: drop-shadow(0 0 8px rgba(93,202,249,.8)); }
+  }
+  /* every panel pulses gently */
+  .panel { animation: cs-panel-pulse 4.5s ease-in-out infinite; }
+  /* radar pulse rings on the central aerial image */
+  .aerial::after {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    width: 60%; height: 60%;
+    border: 1px solid rgba(93,202,249,.55);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    animation: cs-radar 3.6s ease-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .aerial::before {
+    content: "";
+    position: absolute; left: 50%; top: 50%;
+    width: 60%; height: 60%;
+    border: 1px solid rgba(93,202,249,.35);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    animation: cs-radar 3.6s ease-out infinite;
+    animation-delay: 1.8s;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+
+
+  /* ===== 通用面板 ===== */
+
+  .panel {
+
+    position: absolute;
+
+    background: linear-gradient(160deg, rgba(10,32,84,.72), rgba(6,20,56,.62));
+
+    border: 1px solid rgba(43,145,200,.28);
+
+    box-shadow: inset 0 0 24px rgba(20,80,170,.18);
+
+    overflow: hidden;
+
+  }
+
+  .panel-bright { background: linear-gradient(160deg, rgba(2,38,99,.82), rgba(2,30,80,.74)); }
+
+  .panel-hd {
+
+    position: relative; height: 46px;
+
+    overflow: hidden;
+
+  }
+
+  .panel-hd img {
+
+    width: 100%; height: 100%; display: block; object-fit: fill;
+
+  }
+
+  .panel-bd { position: relative; }
+
+
+
+  /* ===== 顶部标题栏（精细化：装饰背景+可编辑文字） ===== */
+
+  header { position: absolute; left: 0; top: 0; width: 1920px; height: 72px; overflow: hidden; }
+
+  header > img.header-deco {
+
+    position: absolute; left: -101px; top: -3px; width: 2072px; height: 77px;
+
+    display: block;
+
+  }
+
+  /* 统计数字区 (553,24 ~ 1101,67) */
+
+  .header-stats {
+
+    position: absolute; left: 553px; top: 24px; width: 560px; height: 43px;
+
+    display: flex; align-items: center; gap: 20px;
+
+  }
+
+  .header-stats .item { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+
+  .header-stats .item + .item { border-left: 1px solid rgba(67,198,245,.25); padding-left: 20px; }
+
+  .header-stats .lab { font-size: 13px; color: #9db8d6; white-space: nowrap; }
+
+  .header-stats .num { font-size: 20px; font-weight: 700; color: #37b8f8; white-space: nowrap; }
+
+  .header-stats .num.yellow { color: #f0c23c; }
+
+  .header-stats .num.green { color: #36d77a; }
+
+  .header-stats .num.white { color: #eaf4ff; }
+
+  /* 系统状态胶囊 (1191,10 ~ 1718,66) */
+
+  .header-status {
+
+    position: absolute; left: 1191px; top: 10px; width: 527px; height: 56px;
+
+  }
+
+  .header-status img { width: 100%; height: 100%; display: block; }
+
+  /* 时间 (1762,20 ~ 1909,55) */
+
+  .top-time {
+
+    position: absolute; right: 34px; top: 50%; transform: translateY(-50%);
+
+    text-align: right; font-size: 15px; color: #cfe3f5; line-height: 1.5;
+
+    z-index: 2;
+
+  }
+
+  .top-time .sub { font-size: 11px; color: #9fc6e8; }
+
+
+
+  /* ===== 预警条（精细化：背景+可编辑消息） ===== */
+
+  .alert-bar {
+
+    position: absolute; left: 13px; top: 72px; width: 1894px; height: 59px;
+
+    background: url("assets/titles/alert_bg_rect.png") no-repeat;
+
+    background-size: 100% 100%;
+
+    display: flex; align-items: center;
+
+  }
+
+  .alert-bar .tag {
+
+    display: flex; align-items: center; gap: 7px; margin-left: 14px;
+
+    margin-right: 18px;
+
+  }
+
+  .alert-bar .tag img { width: 17px; height: 17px; }
+
+  .alert-bar .tag span {
+
+    font-size: 16px; font-weight: 600; color: #ff9a3c;
+
+    text-shadow: 0 0 8px rgba(255,154,60,.4);
+
+  }
+
+  .alert-list { flex: 1; overflow: hidden; position: relative; }
+
+  .marquee {
+
+    display: flex; width: max-content;
+
+    animation: cs-marquee 30s linear infinite;
+
+  }
+
+  .marquee:hover { animation-play-state: paused; }
+
+  .marquee-group { display: flex; }
+
+  @keyframes cs-marquee {
+
+    from { transform: translateX(0); }
+
+    to   { transform: translateX(-50%); }
+
+  }
+
+  .alert-list .msg {
+
+    display: flex; align-items: center; gap: 9px; margin-right: 26px;
+
+    font-size: 16px; color: #d8e6f5; white-space: nowrap;
+
+  }
+
+  .alert-list .msg i {
+
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+
+    background: #ff5a3c; box-shadow: 0 0 6px #ff5a3c;
+
+  }
+
+
+
+  /* ===== 左侧 ===== */
+
+  .stat-4 { display: flex; text-align: center; }
+
+  .stat-4 .cell { flex: 1; }
+
+  .stat-4 .lab { font-size: 14px; color: #8ea8c3; margin-bottom: 8px; }
+
+  .stat-4 .num { font-size: 22px; font-weight: 700; color: #37b8f8; }
+
+  .stat-4 .num.yellow { color: #f0c23c; }
+
+  .stat-4 .num.green { color: #36d77a; }
+
+  .stat-4 .num.white { color: #eaf4ff; }
+
+
+
+  /* 进度条 */
+
+  .prog-row { padding: 0 12px; }
+
+  .prog-row .pr-top { display: flex; justify-content: space-between; font-size: 14px; color: #9db8d6; margin-bottom: 4px; }
+
+  .prog-row .pr-top b { color: #37b8f8; font-weight: 600; }
+
+  .prog-row .pr-bar { height: 9px; background: rgba(20,50,110,.7); border-radius: 5px; overflow: hidden; }
+
+  .prog-row .pr-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #2a9fd8, #34b0ef); }
+
+  .prog-row .pr-fill.green { background: linear-gradient(90deg, #27b359, #34cf79); }
+
+
+
+  /* 区域分布 */
+
+  .region-wrap { display: flex; align-items: center; padding: 6px 10px 0 22px; }
+
+  .region-pie { width: 124px; height: 118px; }
+
+  .region-list { flex: 1; margin-left: 30px; }
+
+  .region-list .row { display: flex; align-items: center; height: 24px; font-size: 13px; }
+
+  .region-list .dot {
+
+    width: 11px; height: 11px; margin-right: 8px; border-radius: 2px;
+
+    box-shadow: 0 0 5px currentColor;
+
+  }
+
+  .region-list .name { color: #b8cfe8; width: 78px; }
+
+  .region-list .val { color: #eaf4ff; width: 44px; text-align: right; }
+
+  .region-list .pct { color: #37b8f8; width: 46px; text-align: right; }
+
+
+
+  /* 实时在营 */
+
+  .insite .panel-bd { padding: 2px 0 12px; }
+
+  .insite .grp { padding: 6px 22px 0; }
+
+  .insite .grp .g-title { font-size: 14px; color: #8ea8c3; margin-bottom: 6px; }
+
+  .insite .vals { display: flex; text-align: center; }
+
+  .insite .vals .cell { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
+
+  .insite .vals .lab { font-size: 14px; color: #9db8d6; }
+
+  .insite .vals .num { font-size: 20px; font-weight: 700; color: #37b8f8; }
+
+  .insite .vals .num.yellow { color: #f0c23c; }
+
+  .insite .divider { height: 1px; margin: 8px 15px 0; background: linear-gradient(90deg, transparent, rgba(67,198,245,.4), transparent); }
+
+
+
+  /* 热门课程 */
+
+  .hot-list { padding: 6px 11px 0; }
+
+  .hot-list .row {
+
+    display: flex; align-items: center; height: 28px;
+
+    border-bottom: 1px solid rgba(43,145,200,.18);
+
+  }
+
+  .hot-list .rank {
+
+    width: 20px; height: 20px; border-radius: 3px; margin-right: 12px;
+
+    display: flex; align-items: center; justify-content: center;
+
+    font-size: 12px; font-weight: 700; color: #04122e;
+
+    background: linear-gradient(180deg, #7ea8c8, #4a72a0);
+
+  }
+
+  .hot-list .row:nth-child(1) .rank { background: linear-gradient(180deg, #ffd964, #f0a83c); }
+
+  .hot-list .row:nth-child(2) .rank { background: linear-gradient(180deg, #d8ecff, #8fb8dd); }
+
+  .hot-list .row:nth-child(3) .rank { background: linear-gradient(180deg, #f0b27a, #c97e46); }
+
+  .hot-list .cname { flex: 1; font-size: 14px; color: #cfe3f5; }
+
+  .hot-list .cnum { font-size: 14px; color: #37b8f8; font-weight: 600; }
+
+
+
+  /* ===== 中间 ===== */
+
+  .mid-top-stats {
+
+    position: absolute; overflow: hidden; z-index: 2;
+
+  }
+
+  .mid-top-stats > img.mid-bg { position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
+
+  /* 异常统计（左卡片）：每项按 PSD bbox 绝对定位 icon，数字/label 相对 icon 偏移 */
+
+  .mid-cell { position: absolute; width: 41px; height: 41px; }
+
+  .mid-cell img { width: 41px; height: 41px; display:block; }
+
+  .mid-cell b {
+
+    position: absolute; left: 57px; top: 4px;
+
+    font-size: 20px; font-weight: 700; color: #37b8f8; white-space: nowrap;
+
+  }
+
+  .mid-cell span {
+
+    position: absolute; left: 52px; top: 33px;
+
+    font-size: 13px; color: #9db8d6; white-space: nowrap;
+
+  }
+
+  /* 事件类型（右卡片）：数字在上(相对top33)、label在下(相对top63) */
+
+  .mid-item { position: absolute; text-align: center; }
+
+  .mid-item b {
+
+    position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+
+    font-size: 20px; font-weight: 700; color: #37b8f8; line-height: 1.2; white-space: nowrap;
+
+  }
+
+  .mid-item b.red { color: #ff5a3c; }
+
+  .mid-item span {
+
+    position: absolute; left: 50%; top: 30px; transform: translateX(-50%);
+
+    font-size: 14px; color: #9db8d6; white-space: nowrap;
+
+  }
+
+  .mid-top-card {
+
+    position: absolute; top: 140px; height: 98px;
+
+    background: linear-gradient(160deg, rgba(10,32,84,.72), rgba(6,20,56,.62));
+
+    border: 1px solid rgba(43,145,200,.28);
+
+    display: flex; align-items: center;
+
+  }
+
+  .mid-top-card .cell { flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+  .mid-top-card .cell img { width: 41px; height: 41px; }
+
+  .mid-top-card .cell .txt .num { font-size: 24px; font-weight: 700; color: #ff6a4d; line-height: 1.1; }
+
+  .mid-top-card .cell .txt .lab { font-size: 14px; color: #8ea8c3; }
+
+  .mid-top-card .cell.col { flex-direction: column; gap: 6px; }
+
+  .mid-top-card .cell.col .num { font-size: 24px; font-weight: 700; color: #37b8f8; line-height: 1; }
+
+  .mid-top-card .cell.col .num.red { color: #ff6a4d; }
+
+  .mid-top-card .cell.col .lab { font-size: 13px; color: #8ea8c3; }
+
+
+
+  /* 航拍图 */
+
+  .aerial {
+
+    position: absolute; left: 463px; top: 253px; width: 993px; height: 543px;
+
+  }
+
+  .aerial img { width: 100%; height: 100%; display: block; border-radius: 6px; }
+
+
+
+  /* 部门卡片 */
+
+  .dept-card {
+
+    position: absolute; width: 295px; height: 77px;
+
+    background: linear-gradient(120deg, rgba(0,90,200,.82), rgba(0,60,150,.72));
+
+    border: 1px solid rgba(90,180,255,.45); border-radius: 4px;
+
+    box-shadow: 0 0 18px rgba(0,120,255,.35), inset 0 0 20px rgba(80,170,255,.25);
+
+    display: flex; align-items: center;
+
+  }
+
+  .dept-card .glow {
+
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+
+    width: 461px; height: 235px; pointer-events: none;
+
+    background: url("assets/card_glow_1.png") no-repeat center/contain;
+
+    opacity: .55;
+
+  }
+
+  .dept-card .txt { padding-left: 27px; position: relative; z-index: 2; }
+
+  .dept-card .t1 { font-size: 15px; color: #eaf4ff; font-weight: 600; }
+
+  .dept-card .t2 { font-size: 17px; color: #a8d8f8; font-weight: 700; margin-top: 6px; }
+
+  .dept-card img { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); z-index: 2; }
+
+
+
+  /* 中间底部小面板 */
+
+  .mini-3 { display: flex; text-align: center; padding-top: 14px; }
+
+  .mini-3 .cell { flex: 1; }
+
+  .mini-3 .lab { font-size: 13px; color: #8ea8c3; margin-bottom: 8px; }
+
+  .mini-3 .num { font-size: 20px; font-weight: 700; color: #37b8f8; }
+
+  .mini-3 .num.green { color: #36d77a; }
+
+
+
+  /* 整体安全态势 */
+
+  .safety-wrap { display: flex; align-items: center; height: 74px; }
+
+  .safety-wrap .scell { flex: 1; text-align: center; position: relative; }
+
+  .safety-wrap .scell + .scell::before {
+
+    content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 1px;
+
+    background: linear-gradient(180deg, transparent, rgba(67,198,245,.45), transparent);
+
+  }
+
+  .safety-wrap .lab { font-size: 13px; color: #8ea8c3; margin-bottom: 8px; }
+
+  .safety-wrap .num { font-size: 20px; font-weight: 700; color: #37b8f8; }
+
+  .safety-wrap .risk { display: flex; justify-content: center; gap: 34px; font-size: 14px; }
+
+  .safety-wrap .risk span { color: #9db8d6; }
+
+  .safety-wrap .risk b { font-size: 18px; margin-left: 4px; }
+
+  .safety-wrap .risk .low b { color: #36d77a; }
+
+  .safety-wrap .risk .mid b { color: #f0c23c; }
+
+  .safety-wrap .risk .high b { color: #ff6a4d; }
+
+
+
+  /* ===== 右侧 ===== */
+
+  .venue-legend { display: flex; justify-content: center; gap: 28px; font-size: 13px; color: #9db8d6; margin-bottom: 10px; }
+
+  .venue-legend i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+
+  .venue-legend .free i { background: #2fe07f; box-shadow: 0 0 6px #2fe07f; }
+
+  .venue-legend .busy i { background: #f0c23c; box-shadow: 0 0 6px #f0c23c; }
+
+  .venue-legend .repair i { background: #ff5a3c; box-shadow: 0 0 6px #ff5a3c; }
+
+  .venue-grid { display: flex; flex-wrap: wrap; gap: 14px 22px; justify-content: center; }
+
+  .venue-item {
+
+    width: 118px; height: 45px; border-radius: 6px;
+
+    border: 1px solid rgba(43,145,200,.4);
+
+    background: rgba(10,40,100,.55);
+
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+
+    font-size: 15px; color: #cfe3f5;
+
+  }
+
+  .venue-item i { width: 14px; height: 14px; border-radius: 50%; }
+
+  .venue-item.free i { background: #2fe07f; box-shadow: 0 0 7px #2fe07f; }
+
+  .venue-item.busy i { background: #f0c23c; box-shadow: 0 0 7px #f0c23c; }
+
+  .venue-item.repair i { background: #ff5a3c; box-shadow: 0 0 7px #ff5a3c; }
+
+
+
+  /* 设备资产 */
+
+  .asset-row { display: flex; align-items: center; padding: 0 13px; height: 27px; }
+
+  .asset-row .lab { width: 92px; font-size: 12px; color: #9db8d6; }
+
+  .asset-row .bar { flex: 1; height: 10px; background: rgba(20,50,110,.7); border-radius: 5px; overflow: hidden; }
+
+  .asset-row .fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #2a9fd8, #34b0ef); }
+
+  .asset-row .fill.green { background: linear-gradient(90deg, #27b359, #34cf79); }
+
+  .asset-row .fill.yellow { background: linear-gradient(90deg, #e8b425, #f9c832); }
+
+  .asset-row .val { width: 56px; text-align: right; font-size: 13px; color: #37b8f8; font-weight: 600; }
+
+
+
+  /* 课程体系滑块 */
+
+  .slider-row { display: flex; align-items: center; padding: 0 13px; height: 27px; }
+
+  .slider-row .lab { width: 106px; font-size: 13px; color: #9db8d6; }
+
+  .slider-row .track { position: relative; flex: 1; height: 7px; background: rgba(20,50,110,.75); border-radius: 4px; }
+
+  .slider-row .track .fill {
+
+    position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px;
+
+    background: linear-gradient(90deg, #2a9fd8, #34b0ef);
+
+  }
+
+  .slider-row .track .knob {
+
+    position: absolute; top: 50%; width: 19px; height: 19px; border-radius: 50%;
+
+    transform: translate(-50%,-50%);
+
+    background: radial-gradient(circle at 35% 35%, #bfeaff, #37b8f8 60%, #1a6cb0);
+
+    box-shadow: 0 0 10px rgba(55,184,248,.9);
+
+  }
+
+  .slider-row .val { width: 42px; text-align: right; font-size: 14px; color: #37b8f8; font-weight: 700; }
+
+
+
+  /* 五色研学线路 */
+
+  /* 五色研学线路 v15: bigger tile padding + text -> tiles naturally grow to fill panel */
+  .route-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 7px 8px 5px;
+  }
+  .route-tile {
+    border-radius: 6px;
+    padding: 13px 11px 13px;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+    background: linear-gradient(135deg, var(--c, #37b8f8) 0%, rgba(0,0,0,.55) 130%);
+    border: 1px solid rgba(255,255,255,.18);
+  }
+  .route-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(55,184,248,.35);
+  }
+  .route-tile::before {
+    content: ""; position: absolute; top: -18px; right: -18px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(255,255,255,.10);
+    pointer-events: none;
+  }
+  .route-tile::after {
+    content: ""; position: absolute; bottom: -12px; left: -12px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,.06);
+    pointer-events: none;
+  }
+  .t-name {
+    font-size: 17px; font-weight: 700;
+    color: #fff;
+    line-height: 1.15;
+    z-index: 1; position: relative;
+    text-shadow: 0 1px 2px rgba(0,0,0,.4);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .t-num {
+    font-size: 34px; font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    z-index: 1; position: relative;
+    text-shadow: 0 2px 4px rgba(0,0,0,.5);
+    margin-top: 4px;
+  }
+  .t-num .u {
+    font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,.85);
+    margin-left: 4px;
+  }
+  .t-tile-summary {
+    background: linear-gradient(135deg, #1d4d7a 0%, rgba(0,0,0,.6) 130%);
+    border-color: rgba(120,200,255,.3);
+  }
+  .t-tile-summary .t-name { color: #b3d8f5; font-weight: 500; }
+  .t-tile-summary .t-num { color: #5dcaf9; }
+  /* 教师数据 */
+
+  .teacher-4 { display: flex; text-align: center; padding-top: 12px; }
+
+  .teacher-4 .cell { flex: 1; }
+
+  .teacher-4 .num { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+
+  .teacher-4 .num.cyan { color: #37b8f8; }
+
+  .teacher-4 .num.green { color: #36d77a; }
+
+  .teacher-4 .num.yellow { color: #f0c23c; }
+
+  .teacher-4 .num.orange { color: #ff8a4d; }
+
+  .teacher-4 .lab { font-size: 12px; color: #8ea8c3; }
+
+
+
+  /* 后勤 */
+
+  .logis-top { display: flex; text-align: center; padding: 12px 13px 0; }
+
+  .logis-top .cell { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+
+  .logis-top .lab { font-size: 13px; color: #8ea8c3; }
+
+  .logis-top .num { font-size: 20px; font-weight: 700; color: #37b8f8; }
+
+  .logis-top .num.yellow { color: #f0c23c; }
+
+
+
+  /* ===== 全局动效：呼吸/脉冲小圆点 + 进度条过渡 ===== */
+
+  @keyframes cs-breathe {
+
+    0%, 100% { transform: scale(1);    opacity: .82; }
+
+    50%      { transform: scale(1.22); opacity: 1;   }
+
+  }
+
+  @keyframes cs-breathe-box {
+
+    0%, 100% { transform: scale(1);    opacity: .82; }
+
+    50%      { transform: scale(1.18); opacity: 1;   }
+
+  }
+
+  /* 所有呼吸圆点：以自身中心缩放，保证跳动时位置不偏移 */
+
+  .venue-item i,
+
+  .venue-legend i,
+
+  .alert-list .msg i,
+
+  .region-list .dot {
+
+    display: inline-block;
+
+    transform-origin: center center;
+
+  }
+
+  /* 场馆状态点（空闲/占用/维修） */
+
+  .venue-item i,
+
+  .venue-legend i { animation: cs-breathe 1.8s ease-in-out infinite; }
+
+  /* 预警条消息红点 */
+
+  .alert-list .msg i { animation: cs-breathe 1.6s ease-in-out infinite; }
+
+  /* 区域分布色块点 */
+
+  .region-list .dot { border-radius: 2px; animation: cs-breathe-box 2.2s ease-in-out infinite; }
+
+
+
+  /* 进度条：从 0 过渡到目标宽度 */
+
+  .prog-row .pr-fill,
+
+  .asset-row .fill,
+
+  .slider-row .track .fill { transition: width 1.6s cubic-bezier(.22,.61,.36,1); width: 0 !important; }
+
+  .slider-row .track .knob { transition: left 1.6s cubic-bezier(.22,.61,.36,1); left: 0 !important; }
+
+
+
+  /* 数字滚动初始态（JS 写入目标值前先清空） */
+
+  .cs-count { font-variant-numeric: tabular-nums; }
+
+</style>
+
+</head>
+
+<body>
+
+<div id="screen">
+  <i class="rise-dot" style="left:80px; animation-delay:0s;"></i>
+  <i class="rise-dot r2" style="left:240px; animation-delay:-0.7s;"></i>
+  <i class="rise-dot r3" style="left:400px; animation-delay:-1.4s;"></i>
+  <i class="rise-dot r4" style="left:560px; animation-delay:-2.1s;"></i>
+  <i class="rise-dot" style="left:720px; animation-delay:-2.8s;"></i>
+  <i class="rise-dot r2" style="left:880px; animation-delay:-3.5s;"></i>
+  <i class="rise-dot r3" style="left:1040px; animation-delay:-4.2s;"></i>
+  <i class="rise-dot r4" style="left:1200px; animation-delay:-4.9s;"></i>
+  <i class="rise-dot" style="left:1360px; animation-delay:-5.6s;"></i>
+  <i class="rise-dot r2" style="left:1520px; animation-delay:-6.3s;"></i>
+  <i class="rise-dot r3" style="left:1660px; animation-delay:-7.0s;"></i>
+  <i class="rise-dot r4" style="left:1780px; animation-delay:-7.7s;"></i>
+  
+
+  <!-- ================= 标题栏（精细化：装饰背景+可编辑文字） ================= -->
+
+  <header>
+
+    <img class="header-deco" src="assets/titles/header_deco.png" alt="">
+
+    <!-- 统计数字（可编辑） -->
+
+    <div class="header-stats">
+
+      <div class="item"><span class="lab">在营师生</span><span class="num white">710</span></div>
+
+      <div class="item"><span class="lab">开班场次</span><span class="num white">36</span></div>
+
+      <div class="item"><span class="lab">在用场馆</span><span class="num white">12</span></div>
+
+      <div class="item"><span class="lab">安全零事故</span><span class="num">2920天</span></div>
+
+    </div>
+
+    <!-- 系统状态胶囊（静态切图） -->
+
+    <div class="header-status"><img src="assets/titles/header_status.png" alt=""></div>
+
+    <!-- 时间（可编辑，JS动态更新） -->
+
+    <div class="top-time">
+
+      <div id="timeText">2025-01-15 14:32:08</div>
+
+      <div class="sub">数据更新: 2分钟前</div>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- ================= 预警条（精细化：背景+可编辑消息） ================= -->
+
+  <div class="alert-bar">
+
+    <div class="tag"><img src="assets/titles/alert_icon.png" alt=""><span>实时预警</span></div>
+
+    <div class="alert-list">
+
+      <div class="marquee">
+
+        <div class="marquee-group">
+
+          <div class="msg"><i></i>安全馆区域人员聚集预警 - 未处理</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>实践楼区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>拓展训练区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>农业基地区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>宿舍楼区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>学生食堂区域人员聚集预警 - 未发现</div>
+
+        </div>
+
+        <div class="marquee-group">
+
+          <div class="msg"><i></i>安全馆区域人员聚集预警 - 未处理</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>实践楼区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>拓展训练区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>农业基地区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>宿舍楼区域人员聚集预警 - 未发现</div>
+
+          <div class="msg"><i style="background:#2fe07f; box-shadow:0 0 7px #2fe07f;"></i>学生食堂区域人员聚集预警 - 未发现</div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ================= 左侧 ================= -->
+
+  <!-- 年度累计 -->
+
+  <section class="panel" style="left:13px; top:136px; width:432px; height:106px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_year.png" alt=""></div>
+
+    <div class="panel-bd stat-4" style="margin-top:4px;">
+
+      <div class="cell"><div class="lab">参训学生</div><div class="num">42,710</div></div>
+
+      <div class="cell"><div class="lab">合作学校</div><div class="num white">56</div></div>
+
+      <div class="cell"><div class="lab">实践课时</div><div class="num yellow">12,800</div></div>
+
+      <div class="cell"><div class="lab">开设课程</div><div class="num green">115</div></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 本月数据 -->
+
+  <section class="panel" style="left:13px; top:248px; width:432px; height:109px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_equip.png" alt=""></div>
+
+    <div class="panel-bd stat-4" style="margin-top:6px;">
+
+      <div class="cell"><div class="lab">新增参训</div><div class="num">710</div></div>
+
+      <div class="cell"><div class="lab">新增学校</div><div class="num white">1</div></div>
+
+      <div class="cell"><div class="lab">开班场次</div><div class="num yellow">36</div></div>
+
+      <div class="cell"><div class="lab">师生满意度</div><div class="num green">98.8%</div></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 目标进度 -->
+
+  <section class="panel" style="left:13px; top:364px; width:432px; height:135px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_goal.png" alt=""></div>
+
+    <div class="panel-bd" style="padding-top:4px;">
+
+      <div class="prog-row">
+
+        <div class="pr-top"><span>年度参训目标</span><b>78.5%</b></div>
+
+        <div class="pr-bar"><div class="pr-fill" style="width:80%;"></div></div>
+
+      </div>
+
+      <div class="prog-row" style="margin-top:18px;">
+
+        <div class="pr-top"><span>课程达标率</span><b style="color:#36d77a;">97.8%</b></div>
+
+        <div class="pr-bar"><div class="pr-fill green" style="width:90%;"></div></div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 区域分布 -->
+
+  <section class="panel" style="left:13px; top:505px; width:432px; height:172px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_dist.png" alt=""></div>
+
+    <div class="panel-bd region-wrap">
+
+      <div id="regionPie" class="region-pie"></div>
+
+      <div class="region-list" id="regionList">
+
+        <div class="row"><i class="dot" style="color:#37b8f8; background:#37b8f8;"></i><span class="name">昆都仑区</span><span class="val">99</span><span class="pct">39%</span></div>
+
+        <div class="row"><i class="dot" style="color:#4ddf8f; background:#4ddf8f;"></i><span class="name">青山区</span><span class="val">121</span><span class="pct">39%</span></div>
+
+        <div class="row"><i class="dot" style="color:#f0c23c; background:#f0c23c;"></i><span class="name">东河区</span><span class="val">34</span><span class="pct">39%</span></div>
+
+        <div class="row"><i class="dot" style="color:#9b8cff; background:#9b8cff;"></i><span class="name">九原区</span><span class="val">182</span><span class="pct">39%</span></div>
+
+        <div class="row"><i class="dot" style="color:#ff8a6a; background:#ff8a6a;"></i><span class="name">其他区县</span><span class="val">231</span><span class="pct">39%</span></div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 实时在营态势 -->
+
+  <section class="panel insite" style="left:13px; top:684px; width:432px; height:180px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_realtime.png" alt=""></div>
+
+    <div class="panel-bd">
+
+      <div class="grp">
+
+        <div class="g-title">在场人员分布</div>
+
+        <div class="vals">
+
+          <div class="cell"><span class="lab">小学</span><span class="num">0</span></div>
+
+          <div class="cell"><span class="lab">初中</span><span class="num">0</span></div>
+
+          <div class="cell"><span class="lab">高中</span><span class="num yellow">710</span></div>
+
+        </div>
+
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grp">
+
+        <div class="g-title">班次状态</div>
+
+        <div class="vals">
+
+          <div class="cell"><span class="lab">进行中</span><span class="num">12</span></div>
+
+          <div class="cell"><span class="lab">待开始</span><span class="num white" style="color:#eaf4ff;">8</span></div>
+
+          <div class="cell"><span class="lab">已结束</span><span class="num yellow">23</span></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 热门课程 TOP5 -->
+
+  <section class="panel" style="left:13px; top:865px; width:432px; height:198px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_top5.png" alt=""></div>
+
+    <div class="panel-bd hot-list">
+
+      <div class="row"><span class="rank">1</span><span class="cname">3D打印</span><span class="cnum">1,256人</span></div>
+
+      <div class="row"><span class="rank">2</span><span class="cname">微电影制作</span><span class="cnum">1,054人</span></div>
+
+      <div class="row"><span class="rank">3</span><span class="cname">智能家居</span><span class="cnum">1,006人</span></div>
+
+      <div class="row"><span class="rank">4</span><span class="cname">军事训练</span><span class="cnum">956人</span></div>
+
+      <div class="row"><span class="rank">5</span><span class="cname">农业劳动</span><span class="cnum">825人</span></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ================= 中间 ================= -->
+
+  <!-- 中间顶部统计区（精细化：背景+异常icon+手写文字数字，按PSD坐标定位） -->
+
+  <div class="mid-top-stats" style="left:464px; top:140px; width:992px; height:98px;">
+
+    <img class="mid-bg" src="assets/titles/mid_stats_bg.png" alt="">
+
+    <!-- 异常统计（左卡片，icon按PSD bbox定位） -->
+
+    <div class="mid-cell" style="left:17px; top:29px;"><img src="assets/titles/mid_icon_0.png" alt=""><b>5</b><span>今日异常</span></div>
+
+    <div class="mid-cell" style="left:153px; top:29px;"><img src="assets/titles/mid_icon_1.png" alt=""><b>14</b><span>本周异常</span></div>
+
+    <div class="mid-cell" style="left:291px; top:29px;"><img src="assets/titles/mid_icon_2.png" alt=""><b>45</b><span>本月异常</span></div>
+
+    <!-- 事件类型（右卡片，数字/label按PSD坐标定位） -->
+
+    <div class="mid-item" style="left:506px; top:33px;"><b class="red">3</b><span>人员聚集</span></div>
+
+    <div class="mid-item" style="left:610px; top:33px;"><b>0</b><span>越界闯入</span></div>
+
+    <div class="mid-item" style="left:722px; top:33px;"><b>1</b><span>攀爬</span></div>
+
+    <div class="mid-item" style="left:828px; top:33px;"><b>1</b><span>跌倒</span></div>
+
+    <div class="mid-item" style="left:934px; top:33px;"><b class="red">22</b><span>遗留物</span></div>
+
+  </div>
+
+
+
+  <!-- 航拍大图 -->
+
+  <div class="aerial"><img src="assets/center_map_card.png" alt=""></div>
+
+
+
+  <!-- 部门卡片（叠在航拍图上） -->
+
+  <div class="dept-card" style="left:490px; top:591px;">
+
+    <div class="glow"></div>
+
+    <div class="txt"><div class="t1">教学指导部</div><div class="t2">115门课程</div></div>
+
+    <img src="assets/icon_725_613.png" style="width:40px; height:35px;" alt="">
+
+  </div>
+
+  <div class="dept-card" style="left:812px; top:591px;">
+
+    <div class="glow"></div>
+
+    <div class="txt"><div class="t1">综合服务部</div><div class="t2">98.5%满意度</div></div>
+
+    <img src="assets/icon_1047_614.png" style="width:37px; height:37px;" alt="">
+
+  </div>
+
+  <div class="dept-card" style="left:1131px; top:591px;">
+
+    <div class="glow"></div>
+
+    <div class="txt"><div class="t1">安全管理部</div><div class="t2">2920天零事故</div></div>
+
+    <img src="assets/icon_1364_608.png" style="width:43px; height:43px;" alt="">
+
+  </div>
+
+  <div class="dept-card" style="left:490px; top:688px;">
+
+    <div class="glow"></div>
+
+    <div class="txt"><div class="t1">后勤保障部</div><div class="t2">97.5%完好率</div></div>
+
+    <img src="assets/icon_725_709.png" style="width:39px; height:39px;" alt="">
+
+  </div>
+
+  <div class="dept-card" style="left:812px; top:688px;">
+
+    <div class="glow"></div>
+
+    <div class="txt"><div class="t1">研学实践部</div><div class="t2">38项研学</div></div>
+
+    <img src="assets/icon_1042_709.png" style="width:40px; height:37px;" alt="">
+
+  </div>
+
+  <div class="dept-card" style="left:1131px; top:688px;">
+
+    <div class="glow"></div>
+
+    <div class="txt"><div class="t1">国防教育和农业劳动部</div><div class="t2">156人军训</div></div>
+
+    <img src="assets/icon_1364_709.png" style="width:44px; height:40px;" alt="">
+
+  </div>
+
+
+
+  <!-- 校外研学安防 -->
+
+  <section class="panel panel-bright" style="left:463px; top:811px; width:480px; height:119px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_safety.png" alt=""></div>
+
+    <div class="panel-bd mini-3">
+
+      <div class="cell"><div class="lab">今日出车/安全抵达</div><div class="num green">6次 / 100%</div></div>
+
+      <div class="cell"><div class="lab">离队报警</div><div class="num">28</div></div>
+
+      <div class="cell"><div class="lab">脸点名通过率</div><div class="num">98.8%</div></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 安防设备运行 -->
+
+  <section class="panel panel-bright" style="left:976px; top:811px; width:480px; height:119px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_devicealert.png" alt=""></div>
+
+    <div class="panel-bd mini-3">
+
+      <div class="cell"><div class="lab">摄像头在线</div><div class="num green">156/160</div></div>
+
+      <div class="cell"><div class="lab">传感器在线</div><div class="num yellow" style="color:#f0c23c;">48/50</div></div>
+
+      <div class="cell"><div class="lab">AI识别准确率</div><div class="num">98.8%</div></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 整体安全态势 -->
+
+  <section class="panel panel-bright" style="left:463px; top:942px; width:993px; height:119px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_globalsafety.png" alt=""></div>
+
+    <div class="panel-bd safety-wrap">
+
+      <div class="scell"><div class="lab">安全零事故天数</div><div class="num" style="color:#36d77a;">2920天 / 100%</div></div>
+
+      <div class="scell"><div class="lab">全达标率</div><div class="num">98.8%</div></div>
+
+      <div class="scell"><div class="lab">部门责任落实率</div><div class="num">98.8%</div></div>
+
+      <div class="scell">
+
+        <div class="lab">风险等级分布</div>
+
+        <div class="risk">
+
+          <span class="low">低<b>92%</b></span>
+
+          <span class="mid">中<b>7%</b></span>
+
+          <span class="high">高<b>1%</b></span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ================= 右侧 ================= -->
+
+  <!-- 场馆资源总览 -->
+
+  <section class="panel" style="left:1474px; top:136px; width:432px; height:194px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_res.png" alt=""></div>
+
+    <div class="panel-bd" style="padding-top:4px;">
+
+      <div class="venue-legend">
+
+        <span class="free"><i></i>空闲</span>
+
+        <span class="busy"><i></i>占用</span>
+
+        <span class="repair"><i></i>维修</span>
+
+      </div>
+
+      <div class="venue-grid">
+
+        <div class="venue-item busy"><i></i>实践楼</div>
+
+        <div class="venue-item busy"><i></i>安全馆</div>
+
+        <div class="venue-item busy"><i></i>拓展训练区</div>
+
+        <div class="venue-item busy"><i></i>农业劳动区</div>
+
+        <div class="venue-item free"><i></i>宿舍楼</div>
+
+        <div class="venue-item free"><i></i>学生食堂</div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 设备资产状态 -->
+
+  <section class="panel" style="left:1474px; top:339px; width:432px; height:132px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_equipstate.png" alt=""></div>
+
+    <div class="panel-bd" style="padding-top:4px;">
+
+      <div class="asset-row"><span class="lab">实训设备</span><div class="bar"><div class="fill green" style="width:76%;"></div></div><span class="val">86/24/6</span></div>
+
+      <div class="asset-row"><span class="lab">固定资产盘点</span><div class="bar"><div class="fill" style="width:91%;"></div></div><span class="val">97.5%</span></div>
+
+      <div class="asset-row"><span class="lab">重点设备运行</span><div class="bar"><div class="fill yellow" style="width:44%;"></div></div><span class="val">28/30</span></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 五色研学线路 -->
+
+  <section class="panel" style="left:1474px; top:480px; width:432px; height:260px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_course.png" alt=""></div>
+
+    <div class="panel-bd route-donut"><div class="route-tiles">
+      <div class="route-tile" style="--c:#ff5a3c;">
+        <div class="t-name">红色 · 爱国</div>
+        <div class="t-num">3<span class="u">条精品</span></div>
+      </div>
+      <div class="route-tile" style="--c:#2fe07f;">
+        <div class="t-name">绿色 · 生态</div>
+        <div class="t-num">4<span class="u">条线路</span></div>
+      </div>
+      <div class="route-tile" style="--c:#37b8f8;">
+        <div class="t-name">蓝色 · 科技</div>
+        <div class="t-num">4<span class="u">条线路</span></div>
+      </div>
+      <div class="route-tile" style="--c:#1a1a2a;">
+        <div class="t-name">黑色 · 国防</div>
+        <div class="t-num">3<span class="u">条线路</span></div>
+      </div>
+      <div class="route-tile" style="--c:#f0c23c;">
+        <div class="t-name">金色 · 劳动</div>
+        <div class="t-num">3<span class="u">条线路</span></div>
+      </div>
+      <div class="route-tile t-tile-summary">
+        <div class="t-name">总览</div>
+        <div class="t-num">17<span class="u">条线路</span></div>
+      </div>
+    </div></section>
+
+
+
+  <!-- 设备资产状态（教师） -->
+
+  <section class="panel" style="left:1474px; top:754px; width:432px; height:125px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_trainres.png" alt=""></div>
+
+    <div class="panel-bd teacher-4">
+
+      <div class="cell"><div class="num cyan">48 / 45</div><div class="lab">专职/外聘教师</div></div>
+
+      <div class="cell"><div class="num green">8次</div><div class="lab">本月教研活动</div></div>
+
+      <div class="cell"><div class="num yellow">4.8/5.0</div><div class="lab">学校评价均分</div></div>
+
+      <div class="cell"><div class="num orange">18门</div><div class="lab">精品课程数量</div></div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- 设备资产状态（后勤） -->
+
+  <section class="panel" style="left:1474px; top:887px; width:432px; height:193px;">
+
+    <div class="panel-hd"><img src="assets/titles/title_board.png" alt=""></div>
+
+    <div class="panel-bd">
+
+      <div class="logis-top">
+
+        <div class="cell"><span class="lab">今日就餐人数</span><span class="num">710人</span></div>
+
+        <div class="cell"><span class="lab">本月调度车联</span><span class="num yellow">12辆</span></div>
+
+      </div>
+
+      <div class="prog-row" style="margin-top:18px;">
+
+        <div class="pr-top"><span>物资库存充足率</span><b style="color:#36d77a;">94.5%</b></div>
+
+        <div class="pr-bar"><div class="pr-fill green" style="width:94.5%;"></div></div>
+
+      </div>
+
+      <div class="prog-row" style="margin-top:18px;">
+
+        <div class="pr-top"><span>宿舍床位使用率</span><b>87.3%</b></div>
+
+        <div class="pr-bar"><div class="pr-fill" style="width:87.3%;"></div></div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</div>
+
+
+
+<!-- ECharts (若离线环境无法加载 CDN，可改为本地 echarts.min.js) -->
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+<script>
+
+  // 自适应缩放：宽度始终顶满，高度按比例，超出的部分可滚动查看
+
+  function fit() {
+
+    var s = window.innerWidth / 1920;
+
+    var el = document.getElementById('screen');
+
+    el.style.transform = 'scale(' + s + ')';
+
+    // 页面可滚动区域 = 缩放后高度，便于鼠标滚轮查看被裁切的底部
+
+    document.body.style.minHeight = (1080 * s) + 'px';
+
+  }
+
+  window.addEventListener('resize', fit);
+
+  fit();
+
+
+
+  // 实时时钟
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function tick() {
+
+    var d = new Date();
+
+    var s = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+
+            pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+
+    document.getElementById('timeText').textContent = s;
+
+  }
+
+  setInterval(tick, 1000);
+
+  tick();
+
+
+
+  // ===== 区域分布饼图 (ECharts) =====
+
+  (function () {
+
+    if (typeof echarts === 'undefined') { console.warn('echarts 未加载'); return; }
+
+    // 数据：与图例保持一致
+
+    var regionData = [
+
+      { name: '昆都仑区', value: 99,  color: '#37b8f8' },
+
+      { name: '青山区',   value: 121, color: '#4ddf8f' },
+
+      { name: '东河区',   value: 34,  color: '#f0c23c' },
+
+      { name: '九原区',   value: 182, color: '#9b8cff' },
+
+      { name: '其他区县', value: 231, color: '#ff8a6a' }
+
+    ];
+
+    var total = regionData.reduce(function (s, d) { return s + d.value; }, 0);
+
+
+
+    var chart = echarts.init(document.getElementById('regionPie'), null, { renderer: 'canvas' });
+
+    chart.setOption({
+
+      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+
+      series: [{
+
+        type: 'pie',
+
+        radius: ['42%', '70%'],
+
+        center: ['50%', '50%'],
+
+        avoidLabelOverlap: true,
+
+        itemStyle: { borderColor: 'rgba(4,16,46,.85)', borderWidth: 2 },
+
+        label: { show: true, color: '#cfe3f5', fontSize: 11, formatter: '{d}%' },
+
+        labelLine: { show: true, length: 6, length2: 6, lineStyle: { color: 'rgba(120,170,220,.45)' } },
+
+        data: regionData.map(function (d) { return { name: d.name, value: d.value, itemStyle: { color: d.color } }; })
+
+      }]
+
+    });
+
+
+
+    // 同步更新图例百分比（与饼图一致）
+
+    var rows = document.querySelectorAll('#regionList .row');
+
+    rows.forEach(function (row, i) {
+
+      var pct = row.querySelector('.pct');
+
+      if (pct && regionData[i]) {
+
+        pct.textContent = Math.round(regionData[i].value / total * 100) + '%';
+
+      }
+
+    });
+
+
+
+    window.addEventListener('resize', function () { chart.resize(); });
+
+  })();
+
+
+
+  // ===== 全局入场动效：数字滚动 + 进度条成长 =====
+
+  (function () {
+
+    var easeOutCubic = function (t) { return 1 - Math.pow(1 - t, 3); };
+
+
+
+    // 解析文本中的数字：返回 {prefix, suffix, num} ；非纯数字文本（含分隔的"/"等）整体跳过
+
+    function parseNum(text) {
+
+      var m = String(text).match(/^([^\d]*)([-+]?\d[\d,]*\.?\d*)(.*)$/);
+
+      if (!m) return null;
+
+      // 含 "/" 或含非数字单位的混合文本（如 "42 / 38"、"1,156人"）仍按首数字滚动，其余保留
+
+      var num = parseFloat(m[2].replace(/,/g, ''));
+
+      if (isNaN(num)) return null;
+
+      return { prefix: m[1], suffix: m[3], num: num, raw: m[2] };
+
+    }
+
+
+
+    function fmt(target, decimals) {
+
+      var s = target.toFixed(decimals);
+
+      // 若原文本含千分位逗号，则补回
+
+      if (s.indexOf('.') >= 0) {
+
+        var parts = s.split('.');
+
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        return parts.join('.');
+
+      }
+
+      return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    }
+
+
+
+    // 需要滚动的数字选择器（覆盖所有数值元素）
+
+    var numSelectors = [
+
+      '.header-stats .num', '.stat-4 .num', '.insite .num', '.mid-cell b',
+
+      '.mid-item b', '.pr-top b', '.safety-wrap .num', '.safety-wrap .risk b',
+
+      '.teacher-4 .num', '.logis-top .num', '.mini-3 .num', '.region-list .val'
+
+    ];
+
+
+
+    function animateNum(el) {
+
+      var p = parseNum(el.textContent);
+
+      if (!p) return;
+
+      var decimals = (p.raw.indexOf('.') >= 0) ? (p.raw.split('.')[1].length) : 0;
+
+      var target = p.num;
+
+      el.classList.add('cs-count');
+
+      var dur = 1500, t0 = performance.now();
+
+      function step(now) {
+
+        var k = Math.min(1, (now - t0) / dur);
+
+        var v = target * easeOutCubic(k);
+
+        el.textContent = p.prefix + fmt(v, decimals) + p.suffix;
+
+        if (k < 1) requestAnimationFrame(step);
+
+        else el.textContent = p.prefix + fmt(target, decimals) + p.suffix;
+
+      }
+
+      requestAnimationFrame(step);
+
+    }
+
+
+
+    function runCount() {
+
+      numSelectors.forEach(function (sel) {
+
+        document.querySelectorAll(sel).forEach(animateNum);
+
+      });
+
+      // 区域分布百分比（饼图数据已算好，单独滚动）
+
+      var rows = document.querySelectorAll('#regionList .row');
+
+      rows.forEach(function (row) {
+
+        var pct = row.querySelector('.pct');
+
+        if (pct) animateNum(pct);
+
+      });
+
+    }
+
+
+
+    // 进度条：从 CSS 的 0 过渡到真实宽度（用 data-w 保存目标值，并以 !important 覆盖初始 0）
+
+    function runBars() {
+
+      document.querySelectorAll('.pr-fill, .asset-row .fill, .slider-row .track .fill').forEach(function (f) {
+
+        var w = f.getAttribute('data-w');
+
+        if (w == null) {
+
+          // 读取 HTML 内联的目标宽度（如 "76%"）
+
+          w = (f.getAttribute('style') || '').match(/width\s*:\s*([^;!]+)/);
+
+          w = w ? w[1].trim() : '0%';
+
+          f.setAttribute('data-w', w);
+
+        }
+
+        void f.offsetWidth; // 强制 reflow，确保从 0 起步
+
+        f.style.setProperty('width', f.getAttribute('data-w'), 'important');
+
+      });
+
+      document.querySelectorAll('.slider-row .track .knob').forEach(function (k) {
+
+        var l = k.getAttribute('data-l');
+
+        if (l == null) {
+
+          l = (k.getAttribute('style') || '').match(/left\s*:\s*([^;!]+)/);
+
+          l = l ? l[1].trim() : '0%';
+
+          k.setAttribute('data-l', l);
+
+        }
+
+        void k.offsetWidth;
+
+        k.style.setProperty('left', k.getAttribute('data-l'), 'important');
+
+      });
+
+    }
+
+
+
+    // 入场：先让进度条在 0，数字滚动，再让进度条成长
+
+    requestAnimationFrame(function () {
+
+      runCount();
+
+      setTimeout(runBars, 120);
+
+    });
+
+  })();
+
+</script>
+
+</body>
+
+</html>
+
